@@ -74,6 +74,8 @@ tic
 [y_init_pred, mdl] = iGB5DOF(omA, omB, "return_model", true);
 toc
 
+save('mdl.mat', 'mdl')
+
 tic
 y_pred = iGB5DOF(omA, omB, mdl);
 toc
