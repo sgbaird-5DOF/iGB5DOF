@@ -80,5 +80,6 @@ tic
 y_pred = iGB5DOF(omA, omB, mdl);
 toc
 
+y_pred
 y_pred - y_init_pred
 y_pred - y_brk

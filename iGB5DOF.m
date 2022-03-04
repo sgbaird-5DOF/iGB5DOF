@@ -40,7 +40,7 @@ function varargout = iGB5DOF(P, Q, mdl, nv)
     if isempty(mdl)
         [qm, nA, y] = get_olmsted_ni_data();
         numNearest = nv.numNearest;
-        [~, ~, mdl, ~] = interp5DOF(qm, nA, y, 'nNN', numNearest, 'mygpropts', {'PredictMethod', 'exact'});
+        [~, ~, mdl, ~] = interp5DOF(qm, nA, y, 'nNN', numNearest, 'mygpropts', {'PredictMethod', 'exact', 'Sigma', 0.01});
     end
 
     npts = size(Q, 3);
@@ -604,11 +604,11 @@ function [ypred, interpfn, mdl, mdlpars] = interp5DOF(qm, nA, y, qm2, nA2, metho
             switch PredictMethod
                 case 'fic'
                     mdlcmd = @(gprMdl, X2) predict(gprMdl, X2);
-                    interpfn = @(qm2, nA2) interp_gpr(gprMdl, qm2, nA2, projtol, usv, zeroQ);
+                    interpfn = @(qm2, nA2) interp_gpr(gprMdl, qm2, nA2, oref, projtol, usv, zeroQ);
                     mdlspec = var_names(gprMdl, cgprMdl, gpropts, ysd, yint);
                 otherwise
                     mdlcmd = @(cgprMdl, X2) predict(cgprMdl, X2);
-                    interpfn = @(qm2, nA2) interp_gpr(cgprMdl, qm2, nA2, projtol, usv, zeroQ);
+                    interpfn = @(qm2, nA2) interp_gpr(cgprMdl, qm2, nA2, oref, projtol, usv, zeroQ);
                     mdlspec = var_names(cgprMdl, gpropts, ysd, yint);
             end
 
@@ -726,9 +726,9 @@ function [ypred, interpfn, mdl, mdlpars] = interp5DOF(qm, nA, y, qm2, nA2, metho
 
 end
 
-function props = interp_gpr(gprMdl, qm2, nA2, projtol, usv, zeroQ)
+function props = interp_gpr(gprMdl, qm2, nA2, oref, projtol, usv, zeroQ)
     % INTERP_GPR  interpolate using Gaussian Process Regression model (gprMdl) and predict()
-    pts2 = get_pts(qm2, nA2);
+    pts2 = get_pts(qm2, nA2, oref);
     ppts2 = get_ppts(pts2, projtol, usv, zeroQ);
     props = predict(gprMdl, ppts2);
 
@@ -739,9 +739,9 @@ function ppts = get_ppts(pts, projtol, usv, zeroQ)
     ppts = proj_down(pts, projtol, usv, 'zero', zeroQ);
 end
 
-function pts = get_pts(qm, nA)
+function pts = get_pts(qm, nA, oref)
     % GET_PTS  get symmetrized octonions from qm/nA pairs
-    pts = get_octpairs(five2oct(qm, nA));
+    pts = normr(get_octpairs(five2oct(qm, nA), 'oref', oref));
 end
 
 function [dataprops, facetprops, NNextrapID, nnList] = ...
